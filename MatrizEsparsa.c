@@ -4,72 +4,149 @@
 
 int main()
 {
-    elemento_t *m;
+    elemento_t *m, *n;
     m = (elemento_t*)malloc(sizeof(elemento_t));
+    n = (elemento_t*)malloc(sizeof(elemento_t));
 
     if(!criaMatriz(m, 10, 10))
         return 0;
+    if(!criaMatriz(n, 10, 10))
+        return 0;
 
-    insereMatriz(m, 0, 0);
-    printf("%.2f\n", m->Baixo->Direita->Valor);
-
+    insereMatriz(m, 1, 3);
+    insereMatriz(m, 1, 1);
+    insereMatriz(m, 1, 2);
+    contaVizinhanca(m, n);
     return 0;
 }
 void insereMatriz(elemento_t *m, int l, int c)
 {
     elemento_t *elemento, *refLin, *refCol, *aux;
+    int j;
 
     elemento = (elemento_t*)malloc(sizeof(elemento_t));
-    refLin = (elemento_t*)malloc(sizeof(elemento_t));
-    refCol = (elemento_t*)malloc(sizeof(elemento_t));
-    aux = (elemento_t*)malloc(sizeof(elemento_t));
-
-    aux = m;
-    while(aux->Lin != l)
-        aux = aux->Baixo;
-    refLin = aux;
-    aux = m;
-    while(aux->Col != c)
-        aux = aux->Direita;
-    refCol = aux;
-
-    if(refLin->Direita->Col == -1 && refCol->Baixo->Lin == -1)
-    {
-        refLin->Direita = elemento;
-        refCol->Baixo = elemento;
-        elemento->Baixo = refCol;
-        elemento->Direita = refLin;
-        elemento->Col = c;
-        elemento->Lin = l;
-        elemento->Valor = 15;
-    }
-
-    while(refLin->Direita->Col < c && refLin->Direita->Col != -1)
-        refLin = refLin->Direita;
-
-    if(refLin->Col == c)
-    {
-        aux = refLin->Direita;
-        elemento = refLin->Direita;
-        elemento->Direita = aux;
-    }
-
-    while(refCol->Baixo->Lin < l)
-        refCol = refCol->Baixo;
-
-    if(refCol->Lin == l)
-    {
-        aux = refCol->Baixo;
-        elemento = refCol->Baixo;
-        elemento->Baixo = aux;
-    }
 
     elemento->Col = c;
     elemento->Lin = l;
     elemento->Valor = 15;
 
+    refLin = m->Baixo;
+    while(refLin->Lin != l)
+        refLin = refLin->Baixo;
+
+    j = 0;
+    while((j < c) && refLin->Direita->Col != -1)
+    {
+        if(refLin->Direita->Col > c)
+        {
+            aux = refLin->Direita;
+            refLin->Direita = elemento;
+            elemento->Direita = aux;
+        }
+        else
+            refLin = refLin->Direita;
+
+        j++;
+    }
+
+    if(refLin->Direita->Col == -1)
+    {
+        refLin->Direita = elemento;
+        elemento->Direita = refLin;
+    }
+
+    refCol = m->Direita;
+    while(refCol->Col != c)
+        refCol = refCol->Direita;
+
+    j = 0;
+    while((j < l) && refCol->Baixo->Lin != -1)
+    {
+        if(refCol->Baixo->Lin > l)
+        {
+            aux = refCol->Baixo;
+            refCol->Baixo = elemento;
+            elemento->Baixo = aux;
+        }
+        else
+            refCol = refCol->Baixo;
+
+        j++;
+    }
+
+    if(refCol->Baixo->Lin == -1)
+    {
+        refCol->Baixo = elemento;
+        elemento->Baixo = refCol;
+    }
+}
+int checaElemento(elemento_t *m, int l, int c)
+{
+    elemento_t *refCol, *refLin;
+    refCol = m->Direita;
+    refLin = m->Baixo;
+    if(l-1 < 0 || c-1 < 0 || l+1 > 10 || c+1 > 10) //Se o elemento ultrapassar os limites, retorna 0.
+        return 0;
+    while(refCol->Col != c) //percorre a cabeça da coluna.
+        refCol = refCol->Direita;
+    if(refCol->Baixo->Lin != -1) //se existir elemento inserido.
+    {
+        while(refLin->Lin != l) //percorre a cabeça da linha.
+            refLin = refLin->Baixo;
+        if(refLin->Direita->Col != -1) //se também existir elemento inserido retorna 1.
+            return 1;
+        else
+            return 0;
+    }
+    else
+        return 0;
 }
 
+void contaVizinhanca(elemento_t *m, elemento_t *n)
+{
+
+    int cont, i, j;
+    for(i=0; i < 10; i++)
+    {
+        for(j=0; j < 10; j++)
+        {
+            cont = 0;                   /*checa elemento retorna 1 se achou elemento no parametro passado.
+                                        se achou o elemento, faz uma verificação, se n tem elemento faz outra. */
+            if(checaElemento(m, i, j))
+            {
+                cont += checaElemento(m, i-1, j-1);
+                cont += checaElemento(m, i-1, j);
+                cont += checaElemento(m, i-1, j+1);
+
+                cont += checaElemento(m, i, j-1);
+                cont += checaElemento(m, i, j+1);
+
+                cont += checaElemento(m, i+1, j-1);
+                cont += checaElemento(m, i+1, j);
+                cont += checaElemento(m, i+1, j+1);
+
+                if(cont == 3 || cont == 2)
+                    insereMatriz(n, i, j);
+            }
+            else
+            {
+                printf("n achou elemento\n");
+                cont += checaElemento(m, i-1, j-1);
+                cont += checaElemento(m, i-1, j);
+                cont += checaElemento(m, i-1, j+1);
+
+                cont += checaElemento(m, i, j-1);
+                cont += checaElemento(m, i, j+1);
+
+                cont += checaElemento(m, i+1, j-1);
+                cont += checaElemento(m, i+1, j);
+                cont += checaElemento(m, i+1, j+1);
+                if(cont == 3)
+                    insereMatriz(n, i, j);
+            }
+        }
+    }
+}
 int criaMatriz(elemento_t *m, int l, int c)
 {
     elemento_t *Lin, *Col;
@@ -80,7 +157,7 @@ int criaMatriz(elemento_t *m, int l, int c)
 	m->Lin = -1;
 	m->Col = -1;
 
-    Lin = (elemento_t*)malloc(l*sizeof(elemento_t));
+    Lin = (elemento_t*)malloc(l*sizeof(elemento_t)); //cria dois arrays que serao os cabeças de colunas e linhas.
     Col = (elemento_t*)malloc(c*sizeof(elemento_t));
 
     if(Lin == NULL || Col == NULL)
