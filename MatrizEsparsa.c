@@ -1,23 +1,34 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <conio.h>
 #include "MatrizEsparsa.h"
 
 
 int main()
 {
+    int i = 0;
     elemento_t *m, *n;
     m = (elemento_t*)malloc(sizeof(elemento_t));
     n = (elemento_t*)malloc(sizeof(elemento_t));
 
-    if(!criaMatriz(m, 10, 10))
+    if(!criaMatriz(m, 18, 18))
         return 0;
-    if(!criaMatriz(n, 10, 10))
+    if(!criaMatriz(n, 18, 18))
         return 0;
-
-    insereMatriz(m, 1, 3);
     insereMatriz(m, 1, 1);
     insereMatriz(m, 1, 2);
-    contaVizinhanca(m, n);
-    return 0;
+    insereMatriz(m, 1, 3);
+    while(i < 1)
+    {
+        contaVizinhanca(m, n);
+        system("cls");
+        //printf("\n-------------------\n");
+        contaVizinhanca(n, m);
+        system("cls");
+        //printf("\n-------------------\n");
+        //i++;
+    }
+return 0;
 }
 void insereMatriz(elemento_t *m, int l, int c)
 {
@@ -28,7 +39,7 @@ void insereMatriz(elemento_t *m, int l, int c)
 
     elemento->Col = c;
     elemento->Lin = l;
-    elemento->Valor = 15;
+    elemento->Valor = 1;
 
     refLin = m->Baixo;
     while(refLin->Lin != l)
@@ -80,12 +91,13 @@ void insereMatriz(elemento_t *m, int l, int c)
         elemento->Baixo = refCol;
     }
 }
+
 int checaElemento(elemento_t *m, int l, int c)
 {
     elemento_t *refCol, *refLin;
     refCol = m->Direita;
     refLin = m->Baixo;
-    if(l-1 < 0 || c-1 < 0 || l+1 > 10 || c+1 > 10) //Se o elemento ultrapassar os limites, retorna 0.
+    if(l-1 < -1 || c-1 < -1 || l+1 > 17 || c+1 > 17) //Se o elemento ultrapassar os limites, retorna 0.
         return 0;
     while(refCol->Col != c) //percorre a cabeça da coluna.
         refCol = refCol->Direita;
@@ -104,16 +116,17 @@ int checaElemento(elemento_t *m, int l, int c)
 
 void contaVizinhanca(elemento_t *m, elemento_t *n)
 {
-
     int cont, i, j;
-    for(i=0; i < 10; i++)
+    for(i=0; i < 16; i++)
     {
-        for(j=0; j < 10; j++)
+        printf("\n");
+        for(j=0; j < 16; j++)
         {
             cont = 0;                   /*checa elemento retorna 1 se achou elemento no parametro passado.
                                         se achou o elemento, faz uma verificação, se n tem elemento faz outra. */
             if(checaElemento(m, i, j))
             {
+                //printf("ACHOU\n");
                 cont += checaElemento(m, i-1, j-1);
                 cont += checaElemento(m, i-1, j);
                 cont += checaElemento(m, i-1, j+1);
@@ -126,11 +139,16 @@ void contaVizinhanca(elemento_t *m, elemento_t *n)
                 cont += checaElemento(m, i+1, j+1);
 
                 if(cont == 3 || cont == 2)
+                {
+                    printf(" O");
                     insereMatriz(n, i, j);
+                }
+                else
+                    printf(" .");
             }
             else
             {
-                printf("n achou elemento\n");
+                //printf("n achou elemento\n");
                 cont += checaElemento(m, i-1, j-1);
                 cont += checaElemento(m, i-1, j);
                 cont += checaElemento(m, i-1, j+1);
@@ -142,7 +160,12 @@ void contaVizinhanca(elemento_t *m, elemento_t *n)
                 cont += checaElemento(m, i+1, j);
                 cont += checaElemento(m, i+1, j+1);
                 if(cont == 3)
+                {
+                    printf(" O");
                     insereMatriz(n, i, j);
+                }
+                else
+                    printf(" .");
             }
         }
     }
