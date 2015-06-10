@@ -1,40 +1,84 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <allegro.h>
 #include "MatrizEsparsa.h"
 
 
 int main()
 {
-    int i = 0;
+    start_allegro();
+
     elemento_t *m, *n;
     m = (elemento_t*)malloc(sizeof(elemento_t));
     n = (elemento_t*)malloc(sizeof(elemento_t));
 
+    BITMAP *buffer = create_bitmap(800, 600);
     if(!criaMatriz(m, 18, 18))
         return 0;
     if(!criaMatriz(n, 18, 18))
         return 0;
-    insereMatriz(m, 1, 1);
-    insereMatriz(m, 1, 2);
-    insereMatriz(m, 1, 3);
-    while(i < 1)
+
+    insereMatriz(m, 2, 2);
+    insereMatriz(m, 3, 3);
+    insereMatriz(m, 4, 3);
+    insereMatriz(m, 4, 2);
+    insereMatriz(m, 4, 1);
+
+    while(!key[KEY_ESC])
     {
+    while(ticks > 0)
+    {
+        ticks = 1;
+        limpaMatriz(n);
         contaVizinhanca(m, n);
-        system("cls");
-        //printf("\n-------------------\n");
+        imprimeMatriz(n, buffer);
+        blit(buffer, screen, 0,0,0,0, 800, 800);
+        clear_bitmap(buffer);
+
+        limpaMatriz(m);
         contaVizinhanca(n, m);
-        system("cls");
-        //printf("\n-------------------\n");
-        //i++;
+        imprimeMatriz(m, buffer);
+        blit(buffer, screen, 0,0,0,0, 800, 800);
+        clear_bitmap(buffer);
     }
+        ticks--;
+    }
+    destroy_bitmap(buffer);
 return 0;
+}
+END_OF_MAIN();
+
+void limpaMatriz(elemento_t *m)
+{
+    elemento_t *refLin, *refCol, *deletado;
+    refCol = m->Direita;
+    refLin = m->Baixo;
+
+    while(refLin->Lin != -1)
+    {
+        while(refLin->Direita->Col != -1)
+        {
+            deletado = refLin->Direita;
+            refLin->Direita = deletado->Direita;
+        }
+        refLin = refLin->Baixo;
+    }
+
+    while(refCol->Col != -1)
+    {
+        while(refCol->Baixo->Lin != -1)
+        {
+            deletado = refCol->Baixo;
+            refCol->Baixo = deletado->Baixo;
+            free(deletado);
+        }
+        refCol = refCol->Direita;
+    }
 }
 void insereMatriz(elemento_t *m, int l, int c)
 {
     elemento_t *elemento, *refLin, *refCol, *aux;
-    int j;
-
     elemento = (elemento_t*)malloc(sizeof(elemento_t));
 
     elemento->Col = c;
@@ -45,71 +89,46 @@ void insereMatriz(elemento_t *m, int l, int c)
     while(refLin->Lin != l)
         refLin = refLin->Baixo;
 
-    j = 0;
-    while((j < c) && refLin->Direita->Col != -1)
+    while(refLin->Direita->Col < c && (refLin->Direita->Col != -1))
     {
-        if(refLin->Direita->Col > c)
-        {
-            aux = refLin->Direita;
-            refLin->Direita = elemento;
-            elemento->Direita = aux;
-        }
-        else
-            refLin = refLin->Direita;
-
-        j++;
+        refLin = refLin->Direita;
     }
-
-    if(refLin->Direita->Col == -1)
-    {
-        refLin->Direita = elemento;
-        elemento->Direita = refLin;
-    }
+    //condicao igual
+    aux = refLin->Direita;
+    refLin->Direita = elemento;
+    elemento->Direita = aux;
 
     refCol = m->Direita;
     while(refCol->Col != c)
         refCol = refCol->Direita;
 
-    j = 0;
-    while((j < l) && refCol->Baixo->Lin != -1)
+    while(refCol->Baixo->Lin < l && refCol->Baixo->Lin != -1)
     {
-        if(refCol->Baixo->Lin > l)
-        {
-            aux = refCol->Baixo;
-            refCol->Baixo = elemento;
-            elemento->Baixo = aux;
-        }
-        else
-            refCol = refCol->Baixo;
-
-        j++;
+        refCol = refCol->Baixo;
     }
+    //condicao igual
+    aux = refCol->Baixo;
+    refCol->Baixo = elemento;
+    elemento->Baixo = aux;
 
-    if(refCol->Baixo->Lin == -1)
-    {
-        refCol->Baixo = elemento;
-        elemento->Baixo = refCol;
-    }
 }
 
 int checaElemento(elemento_t *m, int l, int c)
 {
-    elemento_t *refCol, *refLin;
-    refCol = m->Direita;
-    refLin = m->Baixo;
-    if(l-1 < -1 || c-1 < -1 || l+1 > 17 || c+1 > 17) //Se o elemento ultrapassar os limites, retorna 0.
+    elemento_t *ref;
+    ref = m->Direita;
+    if(l-1 <= -1 || c-1 <= -1 || l+1 >= 17 || c+1 >= 17) //Se o elemento ultrapassar os limites, retorna 0.
         return 0;
-    while(refCol->Col != c) //percorre a cabeça da coluna.
-        refCol = refCol->Direita;
-    if(refCol->Baixo->Lin != -1) //se existir elemento inserido.
-    {
-        while(refLin->Lin != l) //percorre a cabeça da linha.
-            refLin = refLin->Baixo;
-        if(refLin->Direita->Col != -1) //se também existir elemento inserido retorna 1.
-            return 1;
-        else
-            return 0;
-    }
+
+    while(ref->Col != c) //percorre a cabeça da coluna.
+        ref = ref->Direita;
+
+    ref = ref->Baixo;
+    while(ref->Lin != l && ref->Lin != -1)
+        ref = ref->Baixo;
+
+    if(ref->Lin != -1)
+        return 1;
     else
         return 0;
 }
@@ -126,7 +145,6 @@ void contaVizinhanca(elemento_t *m, elemento_t *n)
                                         se achou o elemento, faz uma verificação, se n tem elemento faz outra. */
             if(checaElemento(m, i, j))
             {
-                //printf("ACHOU\n");
                 cont += checaElemento(m, i-1, j-1);
                 cont += checaElemento(m, i-1, j);
                 cont += checaElemento(m, i-1, j+1);
@@ -140,15 +158,11 @@ void contaVizinhanca(elemento_t *m, elemento_t *n)
 
                 if(cont == 3 || cont == 2)
                 {
-                    printf(" O");
                     insereMatriz(n, i, j);
                 }
-                else
-                    printf(" .");
             }
             else
             {
-                //printf("n achou elemento\n");
                 cont += checaElemento(m, i-1, j-1);
                 cont += checaElemento(m, i-1, j);
                 cont += checaElemento(m, i-1, j+1);
@@ -161,11 +175,8 @@ void contaVizinhanca(elemento_t *m, elemento_t *n)
                 cont += checaElemento(m, i+1, j+1);
                 if(cont == 3)
                 {
-                    printf(" O");
                     insereMatriz(n, i, j);
                 }
-                else
-                    printf(" .");
             }
         }
     }
@@ -198,9 +209,12 @@ int criaMatriz(elemento_t *m, int l, int c)
         Lin[i].Direita = &Lin[i];
     }
     Lin[i].Baixo = m;
+    Lin[i].Lin = i;
+    Lin[i].Col = -1;
+    Lin[i].Direita = &Lin[i];
 
     m->Direita = &Col[0];
-    for(i=0;i<l-1;i++)
+    for(i=0;i<c-1;i++)
     {
         Col[i].Direita = &Col[i+1];
         Col[i].Lin = -1;
@@ -208,6 +222,54 @@ int criaMatriz(elemento_t *m, int l, int c)
         Col[i].Baixo = &Col[i];
     }
     Col[i].Direita = m;
+    Col[i].Lin = -1;
+    Col[i].Col = i;
+    Col[i].Baixo = &Col[i];
 
     return 1;
+}
+
+void start_allegro()
+{
+    allegro_init(); // inicializaçao da allegro
+    install_mouse();//inicializaçao do mouse
+    install_keyboard(); // inicializaçao do teclado pra usar allegro
+    set_color_depth(32); // set de cor allegro
+    set_gfx_mode(GFX_AUTODETECT_WINDOWED, 800, 600, 0, 0); // set de resoluçao da tela da allegro
+    set_window_title("GAME OF LIFE");
+}
+
+void imprimeMatriz(elemento_t *m, BITMAP *buffer)
+{
+    int i, j;
+    int x, y = 0;
+    for(i = 0; i < 16; i++)
+    {
+        x = 0;
+        for(j = 0; j < 16; j++)
+        {
+            if(checaElemento(m, i, j))
+                rectfill(buffer, x, y, x+20, y+20, makecol(0, 0, 255));
+            else
+                rectfill(buffer, x, y, x+20, y+20, makecol(0, 0, 0));
+            x += 20;
+        }
+        y += 20;
+    }
+}
+
+void imprimeElemento(elemento_t * m)
+{
+    elemento_t * cell;
+    cell = m->Baixo;
+    while(cell->Lin != -1)
+    {
+        cell = cell->Direita;
+        while(cell->Col != -1)
+        {
+            printf("%d\t%d\n",cell->Lin,cell->Col);
+            cell = cell->Direita;
+        }
+        cell = cell->Baixo;
+    }
 }
